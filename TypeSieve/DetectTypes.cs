@@ -10,7 +10,7 @@ namespace TypeSieve.AssemblyScan
 	{
 		private HashSet<Assembly> _assemblies;
 		private bool? _explicitlyInclusive = null;
-		private readonly List<FilterTypes> _filters;
+		private readonly List<IInclusionOpinion> _filters;
 
 		protected virtual bool ExplicitlyInclusive
 		{
@@ -34,15 +34,18 @@ namespace TypeSieve.AssemblyScan
 			get { return _assemblies; }
 		}
 
-		public virtual IEnumerable<Assembly> SourceAssemblies
+		private ISet<Namespace> _namespaces;
+
+		protected ICollection<Namespace> Namespaces
 		{
-			get { return _assemblies; }
+			get { return _namespaces; }
 		}
 
 		public DetectTypes()
 		{
 			_assemblies = new HashSet<Assembly>();
-			_filters = new List<FilterTypes>();
+			_namespaces = new HashSet<Namespace>();
+			_filters = new List<IInclusionOpinion>();
 		}
 
 		public IFilterFromTypeSources FromAssemblyContaining<TMarker>()
@@ -53,7 +56,8 @@ namespace TypeSieve.AssemblyScan
 
 		public IFilterFromTypeSources FromNamespaceContaining<TMarker>()
 		{
-			throw new NotImplementedException();
+			Namespaces.Add(Namespace.Of<TMarker>());
+			return this;
 		}
 
 		public IFilterFromTypeSources ExcludeNamespaceContaining<TMarker>()
@@ -104,17 +108,11 @@ namespace TypeSieve.AssemblyScan
 			return this;
 		}
 
-		protected virtual bool Included(Type type, IEnumerable<IInclusionOpinion> additionalOpinions)
+		protected virtual bool Included(Type type)
 		{
 			var included = !ExplicitlyInclusive;
 
-			var allOpinions =
-				additionalOpinions
-					.EmptyIfNull()
-					.Concat(
-						_filters.Cast<IInclusionOpinion>());
-
-			foreach (var filter in allOpinions)
+			foreach (var filter in _filters)
 			{
 				var advice = filter.AdviseOn(type);
 
@@ -135,12 +133,42 @@ namespace TypeSieve.AssemblyScan
 			return included;
 		}
 
-		public IEnumerable<Type> KnownTypes(IEnumerable<IInclusionOpinion> opinions)
+		protected IEnumerable<Type> TypesInAssemblySources()
 		{
 			return
-				from assembly in SourceAssemblies
+				from assembly in Assemblies
 				from type in assembly.GetTypes()
-				where Included(type, opinions)
+				select type;
+		}
+
+		protected IEnumerable<Type> TypesInNamespaceSources()
+		{
+			return
+				from ns in Namespaces
+				from type in ns.Types
+				select type;
+		}
+
+		protected IEnumerable<Type> TypesInAllSources()
+		{
+			return
+				TypesInAssemblySources()
+					.Concat(
+						TypesInNamespaceSources());
+		}
+
+		public IFilterFromTypeSources TakeAdviceFrom(params IInclusionOpinion[] opinions)
+		{
+			_filters.AddRange(opinions);
+
+			return this;
+		}
+
+		public IEnumerable<Type> KnownTypes()
+		{
+			return
+				from type in TypesInAllSources()
+				where Included(type)
 				select type;
 		}
 	}

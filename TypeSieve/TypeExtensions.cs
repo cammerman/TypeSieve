@@ -75,5 +75,10 @@ namespace TypeSieve
 					.Select(genericInterface => genericInterface.GetGenericTypeDefinition())
 					.Distinct();
 		}
+
+		public static Namespace GetNamespace(this Type source)
+		{
+			return Namespace.Of(source);
+		}
 	}
 }

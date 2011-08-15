@@ -7,6 +7,6 @@ namespace TypeSieve.AssemblyScan
 {
 	public interface ITypeSource
 	{
-		IEnumerable<Type> KnownTypes(IEnumerable<IInclusionOpinion> opinions);
+		IEnumerable<Type> KnownTypes();
 	}
 }

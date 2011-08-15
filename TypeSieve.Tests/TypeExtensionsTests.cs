@@ -5,6 +5,7 @@ using System.Text;
 using Xunit;
 using Xunit.Extensions;
 using System.Collections;
+using TypeSieve.Tests.ScannableAssembly.Compound.SubNamespace;
 
 namespace TypeSieve.Tests.TypeDetection
 {
