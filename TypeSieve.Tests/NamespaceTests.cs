@@ -36,7 +36,7 @@ namespace TypeSieve.Tests
 
 			var ns = subject.GetNamespace();
 
-			Assert.Same(
+			Assert.Equal(
 				subject.Namespace,
 				ns.NamespacePath);
 		}

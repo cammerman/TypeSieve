@@ -5,13 +5,15 @@ using System.Text;
 using Xunit;
 using TypeSieve.AssemblyScan;
 using TypeSieve.Tests.ScannableAssembly;
+using TypeSieve.Tests.ScannableAssembly.MultipleImplementors;
+using TypeSieve.Tests.ScannableAssembly.Compound;
 
 namespace TypeSieve.Tests
 {
 	public class DetectTypesTests
 	{
 		[Fact]
-		public void KnownTypes_GivenFromAssemblyContainingHasBeenCalled_ReturnsTypesInAssemlby()
+		public void KnownTypes_GivenFromAssemblyContainingHasBeenCalled_ReturnsTypesInAssembly()
 		{
 			var subject = new DetectTypes();
 
@@ -52,5 +54,87 @@ namespace TypeSieve.Tests
 				subject,
 				subject.FromAssemblyContaining<IService>());
 		}
+        
+        [Fact]
+        public void FromNamespaceContaining_T_ReturnsSelfAsFilter()
+        {
+            var subject = new DetectTypes();
+
+            Assert.Same(
+                subject,
+                subject.FromNamespaceContaining<IService>());
+        }
+
+        [Fact]
+        public void KnownTypes_FromAssembly_ExcludingNamespace_ReturnsNoTypesInExcludedNamespace()
+        {
+            var markerType = typeof(IGeneralInterface);
+
+            var subject = new DetectTypes();
+            
+            subject.FromAssemblyContaining<IService>()
+                .ExcludeNamespaceContaining<IGeneralInterface>();
+
+            var knownTypes = subject.KnownTypes().ToList();
+
+            var excludedTypes =
+                markerType.Assembly.GetTypes()
+                    .Where(t => t.Namespace == markerType.Namespace)
+                    .ToList();
+
+            foreach (var excludedType in excludedTypes)
+            {
+                Assert.DoesNotContain(excludedType, knownTypes);
+            }
+        }
+
+        [Fact]
+        public void KnownTypes_FromAssembly_ExcludingNamespace_ReturnsNoTypesInExcludedSubNamespace()
+        {
+            var markerType = typeof(ICompoundNeed);
+
+            var subject = new DetectTypes();
+
+            subject.FromAssemblyContaining<IService>()
+                .ExcludeNamespaceContaining<ICompoundNeed>();
+
+            var knownTypes = subject.KnownTypes().ToList();
+
+            var excludedTypes =
+                markerType.Assembly.GetTypes()
+                    .Where(t => t.Namespace.StartsWith(markerType.Namespace))
+                    .ToList();
+
+            foreach (var excludedType in excludedTypes)
+            {
+                Assert.DoesNotContain(excludedType, knownTypes);
+            }
+        }
+
+        [Fact]
+        public void KnownTypes_FromAssembly_ExcludingTypeCondition_ReturnsNoTypesMatchingCondition()
+        {
+            var markerType = typeof(IGeneralInterface);
+
+            var subject = new DetectTypes();
+
+            Func<Type, bool> matchCondition =
+                t => t.Namespace.EndsWith("ThreeDeep");
+
+            subject.FromAssemblyContaining<IService>()
+                .ExcludeTypesWhere(matchCondition);
+
+            var knownTypes = subject.KnownTypes().ToList();
+
+            var excludedTypes =
+                markerType.Assembly.GetTypes()
+                    .Where(matchCondition)
+                    .ToList();
+
+            foreach (var excludedType in excludedTypes)
+            {
+                Assert.DoesNotContain(excludedType, knownTypes);
+            }
+        }
 	}
 }
