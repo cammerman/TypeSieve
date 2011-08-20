@@ -89,6 +89,29 @@ namespace TypeSieve.Tests
         }
 
         [Fact]
+        public void KnownTypes_FromAssembly_ExcludingNamespace_ReturnsAllTypesNotInExcludedNamespace()
+        {
+            var markerType = typeof(IGeneralInterface);
+
+            var subject = new DetectTypes();
+
+            subject.FromAssemblyContaining<IService>()
+                .ExcludeNamespaceContaining<IGeneralInterface>();
+
+            var knownTypes = subject.KnownTypes().ToList();
+
+            var includedTypes =
+                markerType.Assembly.GetTypes()
+                    .Where(t => !t.Namespace.StartsWith(markerType.Namespace))
+                    .ToList();
+
+            foreach (var includedType in includedTypes)
+            {
+                Assert.Contains(includedType, knownTypes);
+            }
+        }
+
+        [Fact]
         public void KnownTypes_FromAssembly_ExcludingNamespace_ReturnsNoTypesInExcludedSubNamespace()
         {
             var markerType = typeof(ICompoundNeed);
@@ -134,6 +157,32 @@ namespace TypeSieve.Tests
             foreach (var excludedType in excludedTypes)
             {
                 Assert.DoesNotContain(excludedType, knownTypes);
+            }
+        }
+
+        [Fact]
+        public void KnownTypes_FromAssembly_ExcludingTypeCondition_ReturnsAllTypesNotMatchingCondition()
+        {
+            var markerType = typeof(IGeneralInterface);
+
+            var subject = new DetectTypes();
+
+            Func<Type, bool> matchCondition =
+                t => t.Namespace.EndsWith("ThreeDeep");
+
+            subject.FromAssemblyContaining<IService>()
+                .ExcludeTypesWhere(matchCondition);
+
+            var knownTypes = subject.KnownTypes().ToList();
+
+            var includedTypes =
+                markerType.Assembly.GetTypes()
+                    .Where(type => !matchCondition(type))
+                    .ToList();
+
+            foreach (var includedType in includedTypes)
+            {
+                Assert.Contains(includedType, knownTypes);
             }
         }
 	}
