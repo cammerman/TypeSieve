@@ -54,6 +54,7 @@
     <Compile Include="MultipleImplementors\Implementor1.cs" />
     <Compile Include="MultipleImplementors\Implementor2.cs" />
     <Compile Include="IService.cs" />
+    <Compile Include="MultipleImplementors\SubImplementor\SubImplementor.cs" />
     <Compile Include="ThreeDeep\IThreeDeepNeed.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
