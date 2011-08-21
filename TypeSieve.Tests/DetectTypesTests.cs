@@ -829,5 +829,277 @@ namespace TypeSieve.Tests
 				Assert.DoesNotContain(excludedType, knownTypes);
 			}
 		}
+
+		// Opinions
+
+		[Fact]
+		public void KnownTypes_FromAssembly_TakingAdviceFromOneOpinion_ReturnsAllTypesIncludedByOpinion()
+		{
+			var inclusions = new[] { typeof(CompoundModule), typeof(SubImplementor) };
+			var exclusions = new[] { typeof(Implementor1), typeof(Implementor2) };
+
+			var subject = new DetectTypes();
+
+			subject.FromAssemblyContaining<IService>()
+				.TakeAdviceFrom(
+					new TypeListOpinion(
+						inclusions,
+						exclusions));
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var inclusion in inclusions)
+			{
+				Assert.Contains(inclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_TakingAdviceFromOneOpinion_ReturnsNoTypesExcludedByOpinion()
+		{
+			var inclusions = new[] { typeof(CompoundModule), typeof(SubImplementor) };
+			var exclusions = new[] { typeof(Implementor1), typeof(Implementor2) };
+
+			var subject = new DetectTypes();
+
+			subject.FromAssemblyContaining<IService>()
+				.TakeAdviceFrom(
+					new TypeListOpinion(
+						inclusions,
+						exclusions));
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var exclusion in exclusions)
+			{
+				Assert.DoesNotContain(exclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_TypeIncludedByFirstOpinion_TypeExcludedBySecondOpinion_DoesNotReturnType()
+		{
+			var inclusions = new[] { typeof(CompoundModule) };
+			var exclusions = new[] { typeof(CompoundModule) };
+
+			var subject = new DetectTypes();
+
+			var inclusionOpinion =
+				new TypeListOpinion(
+					inclusions,
+					null);
+
+			var exclusionOpinion =
+				new TypeListOpinion(
+					null,
+					exclusions);
+
+			subject.FromAssemblyContaining<IService>()
+				.TakeAdviceFrom(inclusionOpinion)
+				.TakeAdviceFrom(exclusionOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var exclusion in exclusions)
+			{
+				Assert.DoesNotContain(exclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_TypeExcludedByFirstOpinion_TypeIncludedBySecondOpinion_ReturnsType()
+		{
+			var inclusions = new[] { typeof(CompoundModule) };
+			var exclusions = new[] { typeof(CompoundModule) };
+
+			var subject = new DetectTypes();
+
+			var inclusionOpinion =
+				new TypeListOpinion(
+					inclusions,
+					null);
+
+			var exclusionOpinion =
+				new TypeListOpinion(
+					null,
+					exclusions);
+
+			subject.FromAssemblyContaining<IService>()
+				.TakeAdviceFrom(exclusionOpinion)
+				.TakeAdviceFrom(inclusionOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var inclusion in inclusions)
+			{
+				Assert.Contains(inclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_IncludingNamespace_TypeInNamespaceExcludedBySecondOpinion_DoesNotReturnType()
+		{
+			var exclusions = new[] { typeof(CompoundModule) };
+
+			var subject = new DetectTypes();
+
+			var exclusionOpinion =
+				new TypeListOpinion(
+					null,
+					exclusions);
+
+			subject.FromAssemblyContaining<IService>()
+				.IncludeNamespaceContaining<CompoundModule>()
+				.TakeAdviceFrom(exclusionOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var exclusion in exclusions)
+			{
+				Assert.DoesNotContain(exclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_ExcludingNamepsace_TypeInNamespaceIncludedBySecondOpinion_ReturnsType()
+		{
+			var inclusions = new[] { typeof(CompoundModule) };
+
+			var subject = new DetectTypes();
+
+			var inclusionOpinion =
+				new TypeListOpinion(
+					inclusions,
+					null);
+
+			subject.FromAssemblyContaining<IService>()
+				.ExcludeNamespaceContaining<CompoundModule>()
+				.TakeAdviceFrom(inclusionOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			foreach (var inclusion in inclusions)
+			{
+				Assert.Contains(inclusion, knownTypes);
+			}
+		}
+		
+		// Indifferent opinions
+
+		[Fact]
+		public void KnownTypes_FromAssembly_IncludingNamespace_OpinionIsIndifferent_ReturnsNoTypesOutsideNamespace()
+		{
+			var subject = new DetectTypes();
+
+			var indifferentOpinion =
+				new TypeListOpinion(
+					null,
+					null);
+
+			subject.FromAssemblyContaining<IService>()
+				.IncludeNamespaceContaining<ICompoundNeed>()
+				.TakeAdviceFrom(indifferentOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			var excludedTypes =
+				typeof(IService).Assembly.GetTypes()
+					.Where(type =>
+						!type.Namespace.StartsWith(
+							typeof(ICompoundNeed).Namespace))
+					.ToList();
+
+			foreach (var exclusion in excludedTypes)
+			{
+				Assert.DoesNotContain(exclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_IncludingNamespace_OpinionIsIndifferent_ReturnsAllTypesInsideNamespace()
+		{
+			var subject = new DetectTypes();
+
+			var indifferentOpinion =
+				new TypeListOpinion(
+					null,
+					null);
+
+			subject.FromAssemblyContaining<IService>()
+				.IncludeNamespaceContaining<ICompoundNeed>()
+				.TakeAdviceFrom(indifferentOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			var includedTypes =
+				typeof(IService).Assembly.GetTypes()
+					.Where(type =>
+						type.Namespace.StartsWith(
+							typeof(ICompoundNeed).Namespace))
+					.ToList();
+
+			foreach (var inclusion in includedTypes)
+			{
+				Assert.Contains(inclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_ExcludingNamespace_OpinionIsIndifferent_ReturnsAllTypesOutsideNamespace()
+		{
+			var subject = new DetectTypes();
+
+			var indifferentOpinion =
+				new TypeListOpinion(
+					null,
+					null);
+
+			subject.FromAssemblyContaining<IService>()
+				.ExcludeNamespaceContaining<ICompoundNeed>()
+				.TakeAdviceFrom(indifferentOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			var includedTypes =
+				typeof(IService).Assembly.GetTypes()
+					.Where(type =>
+						!type.Namespace.StartsWith(
+							typeof(ICompoundNeed).Namespace))
+					.ToList();
+
+			foreach (var inclusion in includedTypes)
+			{
+				Assert.Contains(inclusion, knownTypes);
+			}
+		}
+
+		[Fact]
+		public void KnownTypes_FromAssembly_ExcludingNamespace_OpinionIsIndifferent_ReturnsNoTypesInsideNamespace()
+		{
+			var subject = new DetectTypes();
+
+			var indifferentOpinion =
+				new TypeListOpinion(
+					null,
+					null);
+
+			subject.FromAssemblyContaining<IService>()
+				.ExcludeNamespaceContaining<ICompoundNeed>()
+				.TakeAdviceFrom(indifferentOpinion);
+
+			var knownTypes = subject.KnownTypes().ToList();
+
+			var excludedTypes =
+				typeof(IService).Assembly.GetTypes()
+					.Where(type =>
+						type.Namespace.StartsWith(
+							typeof(ICompoundNeed).Namespace))
+					.ToList();
+
+			foreach (var exclusion in excludedTypes)
+			{
+				Assert.DoesNotContain(exclusion, knownTypes);
+			}
+		}
 	}
 }
