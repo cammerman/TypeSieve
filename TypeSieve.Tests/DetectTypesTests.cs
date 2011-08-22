@@ -15,6 +15,23 @@ namespace TypeSieve.Tests
 	public class DetectTypesTests
 	{
 		[Fact]
+		public void KnownTypes_GivenFromTypesHasBeenCalled_ReturnsTypesInCollection()
+		{
+			var sourceTypes = new[] { typeof(CompoundModule), typeof(SimpleModule), typeof(ThreeDeepModule) };
+
+			var subject = new DetectTypes();
+
+			subject.FromTypes(sourceTypes);
+
+			var knownTypes = subject.KnownTypes();
+
+			foreach (var type in sourceTypes)
+				Assert.Contains(
+					type,
+					knownTypes);
+		}
+
+		[Fact]
 		public void KnownTypes_GivenFromAssemblyContainingHasBeenCalled_ReturnsTypesInAssembly()
 		{
 			var subject = new DetectTypes();

@@ -7,6 +7,8 @@ namespace TypeSieve.AssemblyScan
 {
 	public interface ISpecifyTypeSources
 	{
+		IFilterFromTypeSources FromTypes(IEnumerable<Type> types);
+
 		IFilterFromTypeSources FromAssemblyContaining<TMarker>();
 
 		IFilterFromTypeSources FromAssemblyContaining(params Type[] markers);

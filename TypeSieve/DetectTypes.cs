@@ -8,10 +8,8 @@ namespace TypeSieve.AssemblyScan
 {
 	public class DetectTypes : ISpecifyTypeSources, IFilterFromTypeSources, ITypeSource
 	{
-		private HashSet<Assembly> _assemblies;
 		private bool? _explicitlyInclusive = null;
-		private readonly List<IInclusionOpinion> _filters;
-
+		
 		protected virtual bool ExplicitlyInclusive
 		{
 			get { return _explicitlyInclusive ?? false; }
@@ -29,6 +27,15 @@ namespace TypeSieve.AssemblyScan
 				_explicitlyInclusive = true;
 		}
 
+		private readonly List<IInclusionOpinion> _filters;
+
+		protected virtual IList<IInclusionOpinion> Filters
+		{
+			get { return _filters; }
+		}
+
+		private HashSet<Assembly> _assemblies;
+		
 		protected virtual ISet<Assembly> Assemblies
 		{
 			get { return _assemblies; }
@@ -41,11 +48,27 @@ namespace TypeSieve.AssemblyScan
 			get { return _namespaces; }
 		}
 
+		private ISet<Type> _types;
+
+		protected ICollection<Type> Types
+		{
+			get { return _types; }
+		}
+
 		public DetectTypes()
 		{
 			_assemblies = new HashSet<Assembly>();
 			_namespaces = new HashSet<Namespace>();
+			_types = new HashSet<Type>();
 			_filters = new List<IInclusionOpinion>();
+		}
+
+		public IFilterFromTypeSources FromTypes(IEnumerable<Type> types)
+		{
+			foreach (var type in types)
+				Types.Add(type);
+
+			return this;
 		}
 
 		public IFilterFromTypeSources FromAssemblyContaining<TMarker>()
@@ -180,7 +203,8 @@ namespace TypeSieve.AssemblyScan
 			return
 				TypesInAssemblySources()
 					.Concat(
-						TypesInNamespaceSources());
+						TypesInNamespaceSources())
+					.Concat(Types);
 		}
 
 		public IFilterFromTypeSources TakeAdviceFrom(params IInclusionOpinion[] opinions)
@@ -193,7 +217,7 @@ namespace TypeSieve.AssemblyScan
 		public IEnumerable<Type> KnownTypes()
 		{
 			return
-				from type in TypesInAllSources()
+				from type in TypesInAllSources().Distinct()
 				where Included(type)
 				select type;
 		}
