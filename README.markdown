@@ -7,10 +7,6 @@ While the problem of assembly scanning and type filtering is simple and solution
 
 API documentation and usage examples are forthcoming. In the meantime you can see how it works fairly clearly by looking at the unit tests in http://github.com/cammerman/TypeSieve/blob/master/TypeSieve.Tests/DetectTypesTests.cs
 
-A few changes I intend to make in the near future:
-
-* Add a method to ISpecifyTypeSources that will take any arbitrary IEnumerable<Type>. This will allow you to sift types collected from anywhere, without having to scan for them using TypeSieve.
-
 The recommended usage for open source projects or reusable assemblies is either to use ILMerge, or to include the source code as a whole, to prevent conflicts between multiple assemblies that may depend on different versions of TypeSieve.
 
 This project is licensed under the BSD license.  The license file is included in the project: http://github.com/cammerman/TypeSieve/blob/master/license.txt
