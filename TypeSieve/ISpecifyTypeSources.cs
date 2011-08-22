@@ -9,6 +9,10 @@ namespace TypeSieve.AssemblyScan
 	{
 		IFilterFromTypeSources FromAssemblyContaining<TMarker>();
 
+		IFilterFromTypeSources FromAssemblyContaining(params Type[] markers);
+
 		IFilterFromTypeSources FromNamespaceContaining<TMarker>();
+
+		IFilterFromTypeSources FromNamespaceContaining(params Type[] markers);
 	}
 }

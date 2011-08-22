@@ -50,36 +50,62 @@ namespace TypeSieve.AssemblyScan
 
 		public IFilterFromTypeSources FromAssemblyContaining<TMarker>()
 		{
-			Assemblies.Add(typeof(TMarker).Assembly);
+			return FromAssemblyContaining(typeof(TMarker));
+		}
+
+		public IFilterFromTypeSources FromAssemblyContaining(params Type[] markers)
+		{
+			foreach (var marker in markers)
+				Assemblies.Add(marker.Assembly);
+
 			return this;
 		}
 
 		public IFilterFromTypeSources FromNamespaceContaining<TMarker>()
 		{
-			Namespaces.Add(Namespace.Of<TMarker>());
+			return FromNamespaceContaining(typeof(TMarker));
+		}
+
+		public IFilterFromTypeSources FromNamespaceContaining(params Type[] markers)
+		{
+			foreach (var marker in markers)
+				Namespaces.Add(Namespace.Of(marker));
+
 			return this;
 		}
 
 		public IFilterFromTypeSources ExcludeNamespaceContaining<TMarker>()
 		{
+			return ExcludeNamespaceContaining(typeof(TMarker));
+		}
+
+		public IFilterFromTypeSources ExcludeNamespaceContaining(params Type[] markers)
+		{
 			Excluding();
 
-			_filters.Add(
-				new NamespaceFilter(
-					EFilterMode.Exclude,
-					typeof(TMarker).Namespace));
+			foreach (var marker in markers)
+				_filters.Add(
+					new NamespaceFilter(
+						EFilterMode.Exclude,
+						marker.Namespace));
 
 			return this;
 		}
 
 		public IFilterFromTypeSources IncludeNamespaceContaining<TMarker>()
 		{
+			return IncludeNamespaceContaining(typeof(TMarker));
+		}
+
+		public IFilterFromTypeSources IncludeNamespaceContaining(params Type[] markers)
+		{
 			Including();
 
-			_filters.Add(
-				new NamespaceFilter(
-					EFilterMode.Include,
-					typeof(TMarker).Namespace));
+			foreach (var marker in markers)
+				_filters.Add(
+					new NamespaceFilter(
+						EFilterMode.Include,
+						marker.Namespace));
 
 			return this;
 		}
